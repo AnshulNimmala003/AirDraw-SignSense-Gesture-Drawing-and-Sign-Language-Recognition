@@ -5,16 +5,13 @@ import numpy as np
 import time
 import string
 
-# Initialize Mediapipe Hand model
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(min_detection_confidence=0.7, min_tracking_confidence=0.7)
 mp_draw = mp.solutions.drawing_utils
 
-# Capture webcam
 cap = cv2.VideoCapture(0)
 screen_width, screen_height = pyautogui.size()
 
-# Variables
 drawing_mode = False
 prev_x, prev_y = None, None
 canvas = None
@@ -28,7 +25,6 @@ sign_language_text = ""
 last_sign_time = 0
 sign_cooldown = 2
 
-# Sign Language Mapping (A-Z using basic gestures)
 sign_language_mapping = {i: letter for i, letter in enumerate(string.ascii_uppercase, 1)}
 
 def display_menu():
@@ -47,7 +43,6 @@ if mode == '3':
     use_whiteboard = True
     canvas = np.ones((480, 640, 3), dtype=np.uint8) * 255
 
-# Function to recognize numbers using finger count
 def detect_number(landmarks):
     finger_tips = [8, 12, 16, 20]
     thumb_tip = 4
@@ -66,13 +61,12 @@ def detect_number(landmarks):
 
     return sum(finger_folded)
 
-# Function to detect sign language gestures
 def detect_sign_language(landmarks):
     global last_sign_time, sign_language_text
     current_time = time.time()
 
     if current_time - last_sign_time < sign_cooldown:
-        return“AirDraw SignSense: Gesture Drawing and Sign Language Recognition”
+        return "AirDraw SignSense: Gesture Drawing and Sign Language Recognition"
 
     fingers_count = detect_number(landmarks)
     if fingers_count in sign_language_mapping:
@@ -82,23 +76,18 @@ def detect_sign_language(landmarks):
         print(f"Current Text: {sign_language_text}")
         last_sign_time = current_time
 
-# Function to handle drawing and erasing
 def handle_drawing(landmarks):
     global prev_x, prev_y, is_eraser_mode, drawing_mode
     index_tip = landmarks[8]
 
-    # Check for the drawing gesture (Index finger up and others down)
     fingers_count = detect_number(landmarks)
     if fingers_count == 1:
         drawing_mode = True
         is_eraser_mode = False
-    
-    # Check for the eraser gesture (Closed fist)
     elif fingers_count == 0:
         is_eraser_mode = True
         drawing_mode = False
 
-    # Drawing or erasing
     x, y = int(index_tip.x * 640), int(index_tip.y * 480)
     if drawing_mode and prev_x is not None and prev_y is not None:
         cv2.line(canvas, (prev_x, prev_y), (x, y), (0, 0, 255), 8)
@@ -106,16 +95,12 @@ def handle_drawing(landmarks):
         cv2.line(canvas, (prev_x, prev_y), (x, y), (255, 255, 255), 40)
     prev_x, prev_y = x, y
 
-# Function for gesture-based cursor control
 def handle_cursor_control(landmarks):
     index_tip = landmarks[8]
     thumb_tip = landmarks[4]
-
-    # Calculate finger positions for cursor movement
     x, y = int(index_tip.x * screen_width), int(index_tip.y * screen_height)
     pyautogui.moveTo(x, y)
 
-    # Detect pinch gesture for mouse click
     distance = np.linalg.norm(np.array([index_tip.x, index_tip.y]) - np.array([thumb_tip.x, thumb_tip.y]))
     if distance < 0.05:
         pyautogui.click()
@@ -148,7 +133,6 @@ while True:
 
     if mode == '5':
         cv2.putText(frame, f"Text: {sign_language_text}", (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
     
     cv2.imshow('Hand Gesture Control', frame)
 
